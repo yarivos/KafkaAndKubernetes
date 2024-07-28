@@ -2,4 +2,21 @@ P: What if i want to change the number of breeds i fetch or the URL I fetch From
 S: Maybe use CM (ConfigMap) But apiKey should stay hidden so use secret
 
 P: what if the app terminates while sleep timer is on? I want the app to remember its waiting time even if it reboots
-S: Use Volume outside the pod
+S: Use Volume outside the pod to hold timer
+
+P: producer problem connecting to kafka.
+S: Changing kafka access from SASL_PLAINTEXT to PLAINTEXT.
+
+P: Kafka didnt create a topic so consumer Fails.
+S: 
+
+P: Testing consumer and producer through kubernetes is not an efficient process.
+S: Running producer locally and port forwarding to the cluster, allowing to avoid unnecessary deployments.
+
+P: overriding kafka official release, couldn't run on other machines.
+S: Helm
+
+P: Producer and consumer would initialize faster than kafka.
+S: use of wait-for package to wait to kafka service to initialize.
+
+P: 
