@@ -1,0 +1,13 @@
+listeners:
+  client:
+    protocol: PLAINTEXT
+
+broker:
+  replicaCount: 1
+
+provisioning:
+  enabled: true
+  topics:
+    - name: breeds
+      partitions: 2
+      replicationFactor: 1

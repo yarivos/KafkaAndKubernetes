@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+  labels:
+    app: consumer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      containers:
+      - name: consumer
+        image: yarivy/kafka-consumer:latest
+        imagePullPolicy: Always
+        env:
+          - name: KAFKA_BROKERS
+            value: my-kafka.kafka.svc.cluster.local:9092
+          - name: KAFKA_GROUP_ID
+            value: breed-consumer
+        

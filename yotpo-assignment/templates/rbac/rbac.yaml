@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "yotpo-assignment.serviceAccountName" .}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: svc-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods", "services"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-svc
+subjects:
+- kind: ServiceAccount
+  name: {{ include "yotpo-assignment.serviceAccountName" .}}
+  apiGroup: ""
+roleRef:
+  kind: Role
+  name: svc-reader 

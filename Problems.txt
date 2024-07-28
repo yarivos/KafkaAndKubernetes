@@ -1,0 +1,5 @@
+P: What if i want to change the number of breeds i fetch or the URL I fetch From (also mean i need a different api key)
+S: Maybe use CM (ConfigMap) But apiKey should stay hidden so use secret
+
+P: what if the app terminates while sleep timer is on? I want the app to remember its waiting time even if it reboots
+S: Use Volume outside the pod

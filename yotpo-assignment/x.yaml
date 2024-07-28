@@ -1,0 +1,1258 @@
+---
+# Source: yotpo-assignment/charts/kafka/templates/networkpolicy.yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: yariv-kafka
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: yariv
+      app.kubernetes.io/name: kafka
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - {}
+  ingress:
+    # Allow client connections
+    - ports:
+        - port: 9092
+        - port: 9094
+        - port: 9093
+---
+# Source: yotpo-assignment/charts/kafka/templates/broker/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: yariv-kafka-broker
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: broker
+    app.kubernetes.io/part-of: kafka
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: yariv
+      app.kubernetes.io/name: kafka
+      app.kubernetes.io/component: broker
+      app.kubernetes.io/part-of: kafka
+---
+# Source: yotpo-assignment/charts/kafka/templates/controller-eligible/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: yariv-kafka-controller
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: controller-eligible
+    app.kubernetes.io/part-of: kafka
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: yariv
+      app.kubernetes.io/name: kafka
+      app.kubernetes.io/component: controller-eligible
+      app.kubernetes.io/part-of: kafka
+---
+# Source: yotpo-assignment/charts/kafka/templates/provisioning/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: yariv-kafka-provisioning
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+automountServiceAccountToken: false
+---
+# Source: yotpo-assignment/charts/kafka/templates/rbac/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: yariv-kafka
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: kafka
+automountServiceAccountToken: false
+---
+# Source: yotpo-assignment/templates/rbac/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: yariv-sa
+---
+# Source: yotpo-assignment/charts/kafka/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: yariv-kafka-user-passwords
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+type: Opaque
+data:
+  inter-broker-password: "TU03eE9NSFdNRQ=="
+  controller-password: "RGk5elJxNHpnVA=="
+---
+# Source: yotpo-assignment/charts/kafka/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: yariv-kafka-kraft-cluster-id
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+type: Opaque
+data:
+  kraft-cluster-id: "TzM0VWhHUmduRjlWVTlVRzJRaHFDdQ=="
+---
+# Source: yotpo-assignment/charts/kafka/templates/broker/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yariv-kafka-broker-configuration
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: broker
+    app.kubernetes.io/part-of: kafka
+data:
+  server.properties: |-
+    # Listeners configuration
+    listeners=CLIENT://:9092,INTERNAL://:9094
+    listener.security.protocol.map=CLIENT:PLAINTEXT,INTERNAL:SASL_PLAINTEXT,CONTROLLER:SASL_PLAINTEXT
+    advertised.listeners=CLIENT://advertised-address-placeholder:9092,INTERNAL://advertised-address-placeholder:9094
+    # KRaft node role
+    process.roles=broker
+    #node.id=
+    controller.listener.names=CONTROLLER
+    controller.quorum.voters=0@yariv-kafka-controller-0.yariv-kafka-controller-headless.default.svc.cluster.local:9093,1@yariv-kafka-controller-1.yariv-kafka-controller-headless.default.svc.cluster.local:9093,2@yariv-kafka-controller-2.yariv-kafka-controller-headless.default.svc.cluster.local:9093
+    # Kraft Controller listener SASL settings
+    sasl.mechanism.controller.protocol=PLAIN
+    listener.name.controller.sasl.enabled.mechanisms=PLAIN
+    listener.name.controller.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="controller_user" password="controller-password-placeholder" user_controller_user="controller-password-placeholder";
+    # Kafka data logs directory
+    log.dir=/bitnami/kafka/data
+    # Kafka application logs directory
+    logs.dir=/opt/bitnami/kafka/logs
+
+    # Common Kafka Configuration
+    
+    sasl.enabled.mechanisms=PLAIN,SCRAM-SHA-256,SCRAM-SHA-512
+    # Interbroker configuration
+    inter.broker.listener.name=INTERNAL
+    sasl.mechanism.inter.broker.protocol=PLAIN
+    # Listeners SASL JAAS configuration
+    listener.name.internal.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="inter_broker_user" password="interbroker-password-placeholder" user_inter_broker_user="interbroker-password-placeholder" user_user1="password-placeholder-0";
+    listener.name.internal.scram-sha-256.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="inter_broker_user" password="interbroker-password-placeholder";
+    listener.name.internal.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="inter_broker_user" password="interbroker-password-placeholder";
+    # End of SASL JAAS configuration
+
+    # Custom Kafka Configuration
+---
+# Source: yotpo-assignment/charts/kafka/templates/controller-eligible/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yariv-kafka-controller-configuration
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: controller-eligible
+    app.kubernetes.io/part-of: kafka
+data:
+  server.properties: |-
+    # Listeners configuration
+    listeners=CLIENT://:9092,INTERNAL://:9094,CONTROLLER://:9093
+    advertised.listeners=CLIENT://advertised-address-placeholder:9092,INTERNAL://advertised-address-placeholder:9094
+    listener.security.protocol.map=CLIENT:PLAINTEXT,INTERNAL:SASL_PLAINTEXT,CONTROLLER:SASL_PLAINTEXT
+    # KRaft process roles
+    process.roles=controller,broker
+    #node.id=
+    controller.listener.names=CONTROLLER
+    controller.quorum.voters=0@yariv-kafka-controller-0.yariv-kafka-controller-headless.default.svc.cluster.local:9093,1@yariv-kafka-controller-1.yariv-kafka-controller-headless.default.svc.cluster.local:9093,2@yariv-kafka-controller-2.yariv-kafka-controller-headless.default.svc.cluster.local:9093
+    # Kraft Controller listener SASL settings
+    sasl.mechanism.controller.protocol=PLAIN
+    listener.name.controller.sasl.enabled.mechanisms=PLAIN
+    listener.name.controller.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="controller_user" password="controller-password-placeholder" user_controller_user="controller-password-placeholder";
+    # Kafka data logs directory
+    log.dir=/bitnami/kafka/data
+    # Kafka application logs directory
+    logs.dir=/opt/bitnami/kafka/logs
+
+    # Common Kafka Configuration
+    
+    sasl.enabled.mechanisms=PLAIN,SCRAM-SHA-256,SCRAM-SHA-512
+    # Interbroker configuration
+    inter.broker.listener.name=INTERNAL
+    sasl.mechanism.inter.broker.protocol=PLAIN
+    # Listeners SASL JAAS configuration
+    listener.name.internal.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="inter_broker_user" password="interbroker-password-placeholder" user_inter_broker_user="interbroker-password-placeholder" user_user1="password-placeholder-0";
+    listener.name.internal.scram-sha-256.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="inter_broker_user" password="interbroker-password-placeholder";
+    listener.name.internal.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="inter_broker_user" password="interbroker-password-placeholder";
+    # End of SASL JAAS configuration
+
+    # Custom Kafka Configuration
+---
+# Source: yotpo-assignment/charts/kafka/templates/scripts-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yariv-kafka-scripts
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+data:
+  kafka-init.sh: |-
+    #!/bin/bash
+
+    set -o errexit
+    set -o nounset
+    set -o pipefail
+
+    error(){
+      local message="${1:?missing message}"
+      echo "ERROR: ${message}"
+      exit 1
+    }
+
+    retry_while() {
+        local -r cmd="${1:?cmd is missing}"
+        local -r retries="${2:-12}"
+        local -r sleep_time="${3:-5}"
+        local return_value=1
+
+        read -r -a command <<< "$cmd"
+        for ((i = 1 ; i <= retries ; i+=1 )); do
+            "${command[@]}" && return_value=0 && break
+            sleep "$sleep_time"
+        done
+        return $return_value
+    }
+
+    replace_in_file() {
+        local filename="${1:?filename is required}"
+        local match_regex="${2:?match regex is required}"
+        local substitute_regex="${3:?substitute regex is required}"
+        local posix_regex=${4:-true}
+
+        local result
+
+        # We should avoid using 'sed in-place' substitutions
+        # 1) They are not compatible with files mounted from ConfigMap(s)
+        # 2) We found incompatibility issues with Debian10 and "in-place" substitutions
+        local -r del=$'\001' # Use a non-printable character as a 'sed' delimiter to avoid issues
+        if [[ $posix_regex = true ]]; then
+            result="$(sed -E "s${del}${match_regex}${del}${substitute_regex}${del}g" "$filename")"
+        else
+            result="$(sed "s${del}${match_regex}${del}${substitute_regex}${del}g" "$filename")"
+        fi
+        echo "$result" > "$filename"
+    }
+
+    kafka_conf_set() {
+        local file="${1:?missing file}"
+        local key="${2:?missing key}"
+        local value="${3:?missing value}"
+
+        # Check if the value was set before
+        if grep -q "^[#\\s]*$key\s*=.*" "$file"; then
+            # Update the existing key
+            replace_in_file "$file" "^[#\\s]*${key}\s*=.*" "${key}=${value}" false
+        else
+            # Add a new key
+            printf '\n%s=%s' "$key" "$value" >>"$file"
+        fi
+    }
+
+    replace_placeholder() {
+      local placeholder="${1:?missing placeholder value}"
+      local password="${2:?missing password value}"
+      local -r del=$'\001' # Use a non-printable character as a 'sed' delimiter to avoid issues with delimiter symbols in sed string
+      sed -i "s${del}$placeholder${del}$password${del}g" "$KAFKA_CONFIG_FILE"
+    }
+
+    append_file_to_kafka_conf() {
+        local file="${1:?missing source file}"
+        local conf="${2:?missing kafka conf file}"
+
+        cat "$1" >> "$2"
+    }
+
+    configure_external_access() {
+      # Configure external hostname
+      if [[ -f "/shared/external-host.txt" ]]; then
+        host=$(cat "/shared/external-host.txt")
+      elif [[ -n "${EXTERNAL_ACCESS_HOST:-}" ]]; then
+        host="$EXTERNAL_ACCESS_HOST"
+      elif [[ -n "${EXTERNAL_ACCESS_HOSTS_LIST:-}" ]]; then
+        read -r -a hosts <<<"$(tr ',' ' ' <<<"${EXTERNAL_ACCESS_HOSTS_LIST}")"
+        host="${hosts[$POD_ID]}"
+      elif [[ "$EXTERNAL_ACCESS_HOST_USE_PUBLIC_IP" =~ ^(yes|true)$ ]]; then
+        host=$(curl -s https://ipinfo.io/ip)
+      else
+        error "External access hostname not provided"
+      fi
+
+      # Configure external port
+      if [[ -f "/shared/external-port.txt" ]]; then
+        port=$(cat "/shared/external-port.txt")
+      elif [[ -n "${EXTERNAL_ACCESS_PORT:-}" ]]; then
+        if [[ "${EXTERNAL_ACCESS_PORT_AUTOINCREMENT:-}" =~ ^(yes|true)$ ]]; then
+          port="$((EXTERNAL_ACCESS_PORT + POD_ID))"
+        else
+          port="$EXTERNAL_ACCESS_PORT"
+        fi
+      elif [[ -n "${EXTERNAL_ACCESS_PORTS_LIST:-}" ]]; then
+        read -r -a ports <<<"$(tr ',' ' ' <<<"${EXTERNAL_ACCESS_PORTS_LIST}")"
+        port="${ports[$POD_ID]}"
+      else
+        error "External access port not provided"
+      fi
+      # Configure Kafka advertised listeners
+      sed -i -E "s|^(advertised\.listeners=\S+)$|\1,EXTERNAL://${host}:${port}|" "$KAFKA_CONFIG_FILE"
+    }
+    configure_kafka_sasl() {
+
+      # Replace placeholders with passwords
+      replace_placeholder "interbroker-password-placeholder" "$KAFKA_INTER_BROKER_PASSWORD"
+      replace_placeholder "controller-password-placeholder" "$KAFKA_CONTROLLER_PASSWORD"
+    }
+
+    export KAFKA_CONFIG_FILE=/config/server.properties
+    cp /configmaps/server.properties $KAFKA_CONFIG_FILE
+
+    # Get pod ID and role, last and second last fields in the pod name respectively
+    POD_ID=$(echo "$MY_POD_NAME" | rev | cut -d'-' -f 1 | rev)
+    POD_ROLE=$(echo "$MY_POD_NAME" | rev | cut -d'-' -f 2 | rev)
+
+    # Configure node.id and/or broker.id
+    if [[ -f "/bitnami/kafka/data/meta.properties" ]]; then
+        if grep -q "broker.id" /bitnami/kafka/data/meta.properties; then
+          ID="$(grep "broker.id" /bitnami/kafka/data/meta.properties | awk -F '=' '{print $2}')"
+          kafka_conf_set "$KAFKA_CONFIG_FILE" "node.id" "$ID"
+        else
+          ID="$(grep "node.id" /bitnami/kafka/data/meta.properties | awk -F '=' '{print $2}')"
+          kafka_conf_set "$KAFKA_CONFIG_FILE" "node.id" "$ID"
+        fi
+    else
+        ID=$((POD_ID + KAFKA_MIN_ID))
+        kafka_conf_set "$KAFKA_CONFIG_FILE" "node.id" "$ID"
+    fi
+    replace_placeholder "advertised-address-placeholder" "${MY_POD_NAME}.yariv-kafka-${POD_ROLE}-headless.default.svc.cluster.local"
+    if [[ "${EXTERNAL_ACCESS_ENABLED:-false}" =~ ^(yes|true)$ ]]; then
+      configure_external_access
+    fi
+    configure_kafka_sasl
+    if [ -f /secret-config/server-secret.properties ]; then
+      append_file_to_kafka_conf /secret-config/server-secret.properties $KAFKA_CONFIG_FILE
+    fi
+---
+# Source: yotpo-assignment/templates/rbac/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: svc-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["services"]
+  verbs: ["get", "watch", "list"]
+---
+# Source: yotpo-assignment/templates/rbac/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+# This role binding allows "jane" to read pods in the "default" namespace.
+# You need to already have a Role named "svc-reader" in that namespace.
+kind: RoleBinding
+metadata:
+  name: read-svc
+subjects:
+- kind: ServiceAccount
+  name: yariv-sa
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: svc-reader
+---
+# Source: yotpo-assignment/charts/kafka/templates/broker/svc-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: yariv-kafka-broker-headless
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: broker
+    app.kubernetes.io/part-of: kafka
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: tcp-interbroker
+      port: 9094
+      protocol: TCP
+      targetPort: interbroker
+    - name: tcp-client
+      port: 9092
+      protocol: TCP
+      targetPort: client
+  selector:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/component: broker
+    app.kubernetes.io/part-of: kafka
+---
+# Source: yotpo-assignment/charts/kafka/templates/controller-eligible/svc-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: yariv-kafka-controller-headless
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: controller-eligible
+    app.kubernetes.io/part-of: kafka
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: tcp-interbroker
+      port: 9094
+      protocol: TCP
+      targetPort: interbroker
+    - name: tcp-client
+      port: 9092
+      protocol: TCP
+      targetPort: client
+    - name: tcp-controller
+      protocol: TCP
+      port: 9093
+      targetPort: controller
+  selector:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/component: controller-eligible
+    app.kubernetes.io/part-of: kafka
+---
+# Source: yotpo-assignment/charts/kafka/templates/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: yariv-kafka
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: kafka
+spec:
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - name: tcp-client
+      port: 9092
+      protocol: TCP
+      targetPort: client
+      nodePort: null
+  selector:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/part-of: kafka
+---
+# Source: yotpo-assignment/templates/consumer-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yariv-yotpo-assignment-consumer
+  labels:
+    helm.sh/chart: yotpo-assignment-0.1.0
+    app.kubernetes.io/name: yotpo-assignment
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: yotpo-assignment
+      app.kubernetes.io/instance: yariv
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: yotpo-assignment
+        app.kubernetes.io/instance: yariv
+        app: consumer
+        helm.sh/chart: yotpo-assignment-0.1.0
+        app.kubernetes.io/name: yotpo-assignment
+        app.kubernetes.io/instance: yariv
+        app.kubernetes.io/version: "1.16.0"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: yariv-sa
+      securityContext:
+        {}
+      initContainers:
+        - name: wait-for-kafka
+          image: ghcr.io/groundnuty/k8s-wait-for:v1.6
+          imagePullPolicy: Always
+          args:
+            - "svc"
+            - yariv-kafka
+      containers:
+        - name: consumer
+          securityContext:
+            {}
+          image: "yarivy/kafka-consumer:latest"
+          imagePullPolicy: Always
+          env:
+            - name: KAFKA_BROKERS
+              value: yariv-kafka:9092
+          resources:
+            {}
+---
+# Source: yotpo-assignment/templates/producer-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yariv-yotpo-assignment-producer
+  labels:
+    helm.sh/chart: yotpo-assignment-0.1.0
+    app.kubernetes.io/name: yotpo-assignment
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: yotpo-assignment
+      app.kubernetes.io/instance: yariv
+      app: producer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: yotpo-assignment
+        app.kubernetes.io/instance: yariv
+        app: producer
+        helm.sh/chart: yotpo-assignment-0.1.0
+        app.kubernetes.io/name: yotpo-assignment
+        app.kubernetes.io/instance: yariv
+        app.kubernetes.io/version: "1.16.0"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: yariv-sa
+      securityContext:
+        {}
+      initContainers:
+        - name: wait-for-kafka
+          image: ghcr.io/groundnuty/k8s-wait-for:v1.6
+          imagePullPolicy: Always
+          args:
+            - "svc"
+            - yariv-kafka
+      containers:
+        - name: yotpo-assignment
+          securityContext:
+            {}
+          image: "yarivy/kafka-producer:latest"
+          imagePullPolicy: Always
+          env:
+            - name: KAFKA_BROKERS
+              value: yariv-kafka:9092
+          resources:
+            {}
+---
+# Source: yotpo-assignment/charts/kafka/templates/broker/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: yariv-kafka-broker
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: broker
+    app.kubernetes.io/part-of: kafka
+spec:
+  podManagementPolicy: Parallel
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: yariv
+      app.kubernetes.io/name: kafka
+      app.kubernetes.io/component: broker
+      app.kubernetes.io/part-of: kafka
+  serviceName: yariv-kafka-broker-headless
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: yariv
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: kafka
+        app.kubernetes.io/version: 3.7.1
+        helm.sh/chart: kafka-29.3.13
+        app.kubernetes.io/component: broker
+        app.kubernetes.io/part-of: kafka
+      annotations:
+        checksum/configuration: 85dbf8231e7a7e231ae2ea9c1fa5641a1bbe7283238476de34b7d1673894115a
+        checksum/passwords-secret: dd0a1fa1d2c7f39f063c162603932f7ee2d4e47df3f5ea17cce9561430ae1a11
+    spec:
+      
+      automountServiceAccountToken: false
+      hostNetwork: false
+      hostIPC: false
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: yariv
+                    app.kubernetes.io/name: kafka
+                    app.kubernetes.io/component: broker
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault
+        supplementalGroups: []
+        sysctls: []
+      serviceAccountName: yariv-kafka
+      enableServiceLinks: true
+      initContainers:
+        - name: kafka-init
+          image: docker.io/bitnami/kafka:3.7.1-debian-12-r4
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+          resources:
+            limits: {}
+            requests: {} 
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              /scripts/kafka-init.sh
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                    fieldPath: metadata.name
+            - name: KAFKA_VOLUME_DIR
+              value: "/bitnami/kafka"
+            - name: KAFKA_MIN_ID
+              value: "100"
+            - name: KAFKA_INTER_BROKER_USER
+              value: "inter_broker_user"
+            - name: KAFKA_INTER_BROKER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-user-passwords
+                  key: inter-broker-password
+            - name: KAFKA_CONTROLLER_USER
+              value: "controller_user"
+            - name: KAFKA_CONTROLLER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-user-passwords
+                  key: controller-password
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/kafka
+            - name: kafka-config
+              mountPath: /config
+            - name: kafka-configmaps
+              mountPath: /configmaps
+            - name: kafka-secret-config
+              mountPath: /secret-config
+            - name: scripts
+              mountPath: /scripts
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: kafka
+          image: docker.io/bitnami/kafka:3.7.1-debian-12-r4
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: KAFKA_HEAP_OPTS
+              value: "-Xmx1024m -Xms1024m"
+            - name: KAFKA_KRAFT_CLUSTER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-kraft-cluster-id
+                  key: kraft-cluster-id
+            - name: KAFKA_KRAFT_BOOTSTRAP_SCRAM_USERS
+              value: "true"
+            - name: KAFKA_INTER_BROKER_USER
+              value: "inter_broker_user"
+            - name: KAFKA_INTER_BROKER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-user-passwords
+                  key: inter-broker-password
+            - name: KAFKA_CONTROLLER_USER
+              value: "controller_user"
+            - name: KAFKA_CONTROLLER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-user-passwords
+                  key: controller-password
+          ports:
+            - name: client
+              containerPort: 9092
+            - name: interbroker
+              containerPort: 9094
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            exec:
+              command:
+                - pgrep
+                - -f
+                - kafka
+          readinessProbe:
+            failureThreshold: 6
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            tcpSocket:
+              port: "client"
+          resources:
+            limits:
+              cpu: 750m
+              ephemeral-storage: 2Gi
+              memory: 768Mi
+            requests:
+              cpu: 500m
+              ephemeral-storage: 50Mi
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/kafka
+            - name: logs
+              mountPath: /opt/bitnami/kafka/logs
+            - name: kafka-config
+              mountPath: /opt/bitnami/kafka/config/server.properties
+              subPath: server.properties
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: kafka-configmaps
+          configMap:
+            name: yariv-kafka-broker-configuration
+        - name: kafka-secret-config
+          emptyDir: {}
+        - name: kafka-config
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: scripts
+          configMap:
+            name: yariv-kafka-scripts
+            defaultMode: 493
+        - name: logs
+          emptyDir: {}
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "8Gi"
+---
+# Source: yotpo-assignment/charts/kafka/templates/controller-eligible/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: yariv-kafka-controller
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: controller-eligible
+    app.kubernetes.io/part-of: kafka
+spec:
+  podManagementPolicy: Parallel
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: yariv
+      app.kubernetes.io/name: kafka
+      app.kubernetes.io/component: controller-eligible
+      app.kubernetes.io/part-of: kafka
+  serviceName: yariv-kafka-controller-headless
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: yariv
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: kafka
+        app.kubernetes.io/version: 3.7.1
+        helm.sh/chart: kafka-29.3.13
+        app.kubernetes.io/component: controller-eligible
+        app.kubernetes.io/part-of: kafka
+      annotations:
+        checksum/configuration: 9b69ddc0d72d1e660e1bf34825ed8031bd62340fe60b6e267846ea301f76722d
+        checksum/passwords-secret: dd72e0acf0917bd8d9f80a6dd59e7d6eea43a4c06520a860154beb76dd2a7790
+    spec:
+      
+      automountServiceAccountToken: false
+      hostNetwork: false
+      hostIPC: false
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: yariv
+                    app.kubernetes.io/name: kafka
+                    app.kubernetes.io/component: controller-eligible
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault
+        supplementalGroups: []
+        sysctls: []
+      serviceAccountName: yariv-kafka
+      enableServiceLinks: true
+      initContainers:
+        - name: kafka-init
+          image: docker.io/bitnami/kafka:3.7.1-debian-12-r4
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+          resources:
+            limits: {}
+            requests: {} 
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              /scripts/kafka-init.sh
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                    fieldPath: metadata.name
+            - name: KAFKA_VOLUME_DIR
+              value: "/bitnami/kafka"
+            - name: KAFKA_MIN_ID
+              value: "0"
+            - name: KAFKA_INTER_BROKER_USER
+              value: "inter_broker_user"
+            - name: KAFKA_INTER_BROKER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-user-passwords
+                  key: inter-broker-password
+            - name: KAFKA_CONTROLLER_USER
+              value: "controller_user"
+            - name: KAFKA_CONTROLLER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-user-passwords
+                  key: controller-password
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/kafka
+            - name: kafka-config
+              mountPath: /config
+            - name: kafka-configmaps
+              mountPath: /configmaps
+            - name: kafka-secret-config
+              mountPath: /secret-config
+            - name: scripts
+              mountPath: /scripts
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: kafka
+          image: docker.io/bitnami/kafka:3.7.1-debian-12-r4
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: KAFKA_HEAP_OPTS
+              value: "-Xmx1024m -Xms1024m"
+            - name: KAFKA_KRAFT_CLUSTER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-kraft-cluster-id
+                  key: kraft-cluster-id
+            - name: KAFKA_KRAFT_BOOTSTRAP_SCRAM_USERS
+              value: "true"
+            - name: KAFKA_INTER_BROKER_USER
+              value: "inter_broker_user"
+            - name: KAFKA_INTER_BROKER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-user-passwords
+                  key: inter-broker-password
+            - name: KAFKA_CONTROLLER_USER
+              value: "controller_user"
+            - name: KAFKA_CONTROLLER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yariv-kafka-user-passwords
+                  key: controller-password
+          ports:
+            - name: controller
+              containerPort: 9093
+            - name: client
+              containerPort: 9092
+            - name: interbroker
+              containerPort: 9094
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            exec:
+              command:
+                - pgrep
+                - -f
+                - kafka
+          readinessProbe:
+            failureThreshold: 6
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+            tcpSocket:
+              port: "controller"
+          resources:
+            limits:
+              cpu: 750m
+              ephemeral-storage: 2Gi
+              memory: 768Mi
+            requests:
+              cpu: 500m
+              ephemeral-storage: 50Mi
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/kafka
+            - name: logs
+              mountPath: /opt/bitnami/kafka/logs
+            - name: kafka-config
+              mountPath: /opt/bitnami/kafka/config/server.properties
+              subPath: server.properties
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: kafka-configmaps
+          configMap:
+            name: yariv-kafka-controller-configuration
+        - name: kafka-secret-config
+          emptyDir: {}
+        - name: kafka-config
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: scripts
+          configMap:
+            name: yariv-kafka-scripts
+            defaultMode: 493
+        - name: logs
+          emptyDir: {}
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "8Gi"
+---
+# Source: yotpo-assignment/charts/kafka/templates/provisioning/job.yaml
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: yariv-kafka-provisioning
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: yariv
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/version: 3.7.1
+    helm.sh/chart: kafka-29.3.13
+    app.kubernetes.io/component: kafka-provisioning
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: yariv
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: kafka
+        app.kubernetes.io/version: 3.7.1
+        helm.sh/chart: kafka-29.3.13
+        app.kubernetes.io/component: kafka-provisioning
+    spec:
+      serviceAccountName: yariv-kafka-provisioning
+      automountServiceAccountToken: false
+      enableServiceLinks: true
+      
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault
+        supplementalGroups: []
+        sysctls: []
+      restartPolicy: OnFailure
+      terminationGracePeriodSeconds: 0
+      initContainers:
+        - name: wait-for-available-kafka
+          image: docker.io/bitnami/kafka:3.7.1-debian-12-r4
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              wait-for-port \
+                --host=yariv-kafka \
+                --state=inuse \
+                --timeout=120 \
+                9092;
+              echo "Kafka is available";
+          resources:
+            limits:
+              cpu: 375m
+              ephemeral-storage: 2Gi
+              memory: 384Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 50Mi
+              memory: 256Mi
+      containers:
+        - name: kafka-provisioning
+          image: docker.io/bitnami/kafka:3.7.1-debian-12-r4
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+          command:
+            - /bin/bash
+          args:
+            - -efc
+            - |
+              echo "Configuring environment"
+              . /opt/bitnami/scripts/libkafka.sh
+              export CLIENT_CONF="${CLIENT_CONF:-/tmp/client.properties}"
+              if [ ! -f "$CLIENT_CONF" ]; then
+                touch $CLIENT_CONF
+
+                kafka_common_conf_set "$CLIENT_CONF" security.protocol "PLAINTEXT"
+              fi
+
+              echo "Running pre-provisioning script if any given"
+              
+              
+
+              kafka_provisioning_commands=(
+                "/opt/bitnami/kafka/bin/kafka-topics.sh \
+                    --create \
+                    --if-not-exists \
+                    --bootstrap-server ${KAFKA_SERVICE} \
+                    --replication-factor 1 \
+                    --partitions 2 \
+                    --command-config ${CLIENT_CONF} \
+                    --topic breeds"
+              )
+
+              echo "Starting provisioning"
+              for ((index=0; index < ${#kafka_provisioning_commands[@]}; index+=1))
+              do
+                for j in $(seq ${index} $((${index}+1-1)))
+                do
+                    ${kafka_provisioning_commands[j]} & # Async command
+                done
+                wait  # Wait the end of the jobs
+              done
+
+              echo "Running post-provisioning script if any given"
+              
+              
+
+              echo "Provisioning succeeded"
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: KAFKA_SERVICE
+              value: yariv-kafka:9092
+          resources:
+            limits:
+              cpu: 375m
+              ephemeral-storage: 2Gi
+              memory: 384Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 50Mi
+              memory: 256Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
