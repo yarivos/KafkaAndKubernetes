@@ -11,7 +11,7 @@ kafka_logger.setLevel(logging.WARN)
 
 
 brokers = os.getenv('KAFKA_BROKERS').split(',')
-logging.info(f"Brokers: {brokers}")  # Self Check Broker Has Been Set By ENV
+logging.info(f"Brokers: {brokers}")  # Self Check, Broker Has Been Set By ENV
 
 consumer = KafkaConsumer(
     'breeds',

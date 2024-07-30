@@ -1,4 +1,5 @@
 # Yariv's Assignment
+Assignment can be found on https://github.com/yarivos/KafkaAndKubernetes
 ## Prerequisites
 1. Docker Enigne
 2. K8s Command Line Tool
