@@ -37,7 +37,7 @@ spec:
             - "service"
             - {{include "yotpo-assignment.kafkaService" . }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: producer
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.producer.image.repository }}:{{ .Values.producer.image.tag | default .Chart.AppVersion }}"
