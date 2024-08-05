@@ -31,7 +31,7 @@ kafka:
     topics:
       - name: breeds
         partitions: 2
-        replicationFactor: 1
+        replicationFactor: 2
 
 imagePullSecrets: []
 nameOverride: ""
