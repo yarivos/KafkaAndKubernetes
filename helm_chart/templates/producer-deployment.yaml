@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "yotpo-assignment.consumer.fullname" . }}
+  name: {{ include "helm_chart.producer.fullname" . }}
   labels:
-    {{- include "yotpo-assignment.labels" . | nindent 4 }}
+    {{- include "helm_chart.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.consumer.replicaCount }}
+  replicas: {{ .Values.producer.replicaCount }}
   selector:
     matchLabels:
-      {{- include "yotpo-assignment.consumer.selectorLabels" . | nindent 6 }}
+      {{- include "helm_chart.producer.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -16,13 +16,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "yotpo-assignment.consumer.selectorLabels" . | nindent 8 }}
-        {{- include "yotpo-assignment.labels" . | nindent 8 }}
+        {{- include "helm_chart.producer.selectorLabels" . | nindent 8 }}
+        {{- include "helm_chart.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      serviceAccountName: {{ include "yotpo-assignment.serviceAccountName" .}}
+      serviceAccountName: {{ include "helm_chart.serviceAccountName" .}}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -35,18 +35,16 @@ spec:
           imagePullPolicy: Always
           args:
             - "service"
-            - {{include "yotpo-assignment.kafkaService" . }}
+            - {{include "helm_chart.kafkaService" . }}
       containers:
-        - name: consumer
+        - name: producer
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.consumer.image.repository }}:{{ .Values.consumer.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.consumer.image.pullPolicy }}
+          image: "{{ .Values.producer.image.repository }}:{{ .Values.producer.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.producer.image.pullPolicy }}
           env:
             - name: KAFKA_BROKERS
-              value: {{ include "yotpo-assignment.kafkaBrokers" . }}
-            - name: KAFKA_GROUP_ID
-              value: "{{ .Values.consumer.groupId }}"
+              value: {{ include "helm_chart.kafkaBrokers" . }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "yotpo-assignment.name" -}}
+{{- define "helm_chart.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "yotpo-assignment.fullname" -}}
+{{- define "helm_chart.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "yotpo-assignment.chart" -}}
+{{- define "helm_chart.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "yotpo-assignment.labels" -}}
-helm.sh/chart: {{ include "yotpo-assignment.chart" . }}
-{{ include "yotpo-assignment.selectorLabels" . }}
+{{- define "helm_chart.labels" -}}
+helm.sh/chart: {{ include "helm_chart.chart" . }}
+{{ include "helm_chart.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,37 +45,37 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "yotpo-assignment.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "yotpo-assignment.name" . }}
+{{- define "helm_chart.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "helm_chart.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{- define "yotpo-assignment.producer.selectorLabels" -}}
-{{- include "yotpo-assignment.selectorLabels" . }}
+{{- define "helm_chart.producer.selectorLabels" -}}
+{{- include "helm_chart.selectorLabels" . }}
 app: producer
 {{- end }}
 
-{{- define "yotpo-assignment.consumer.selectorLabels" -}}
-{{- include "yotpo-assignment.selectorLabels" . }}
+{{- define "helm_chart.consumer.selectorLabels" -}}
+{{- include "helm_chart.selectorLabels" . }}
 app: consumer
 {{- end }}
 
-{{- define "yotpo-assignment.consumer.fullname" }}
-{{- printf "%s-%s" (include "yotpo-assignment.fullname" .) "consumer" }}
+{{- define "helm_chart.consumer.fullname" }}
+{{- printf "%s-%s" (include "helm_chart.fullname" .) "consumer" }}
 {{- end }}
 
-{{- define "yotpo-assignment.producer.fullname" }}
-{{- printf "%s-%s" (include "yotpo-assignment.fullname" .) "producer" }}
+{{- define "helm_chart.producer.fullname" }}
+{{- printf "%s-%s" (include "helm_chart.fullname" .) "producer" }}
 {{- end }}
 
-{{- define "yotpo-assignment.serviceAccountName" -}}
+{{- define "helm_chart.serviceAccountName" -}}
 {{- printf "%s-%s" .Release.Name "sa" }}
 {{- end }}
 
-{{- define "yotpo-assignment.kafkaService" -}}
+{{- define "helm_chart.kafkaService" -}}
 {{- printf "%s-%s" .Release.Name "kafka" }}
 {{- end }}
 
-{{- define "yotpo-assignment.kafkaBrokers" -}}
+{{- define "helm_chart.kafkaBrokers" -}}
 {{- printf "%s-%s:9092" .Release.Name "kafka" }}
 {{- end }}

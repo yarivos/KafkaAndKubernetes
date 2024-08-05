@@ -1,1 +1,0 @@
-Thanks for installing Yariv's Yotpo assignment helm chart!

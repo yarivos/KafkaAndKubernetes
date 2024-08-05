@@ -1,5 +1,5 @@
 ---
-# Source: yotpo-assignment/charts/kafka/templates/networkpolicy.yaml
+# Source: helm_chart/charts/kafka/templates/networkpolicy.yaml
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
@@ -28,7 +28,7 @@ spec:
         - port: 9094
         - port: 9093
 ---
-# Source: yotpo-assignment/charts/kafka/templates/broker/pdb.yaml
+# Source: helm_chart/charts/kafka/templates/broker/pdb.yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -51,7 +51,7 @@ spec:
       app.kubernetes.io/component: broker
       app.kubernetes.io/part-of: kafka
 ---
-# Source: yotpo-assignment/charts/kafka/templates/controller-eligible/pdb.yaml
+# Source: helm_chart/charts/kafka/templates/controller-eligible/pdb.yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -74,7 +74,7 @@ spec:
       app.kubernetes.io/component: controller-eligible
       app.kubernetes.io/part-of: kafka
 ---
-# Source: yotpo-assignment/charts/kafka/templates/provisioning/serviceaccount.yaml
+# Source: helm_chart/charts/kafka/templates/provisioning/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -88,7 +88,7 @@ metadata:
     helm.sh/chart: kafka-29.3.13
 automountServiceAccountToken: false
 ---
-# Source: yotpo-assignment/charts/kafka/templates/rbac/serviceaccount.yaml
+# Source: helm_chart/charts/kafka/templates/rbac/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -103,13 +103,13 @@ metadata:
     app.kubernetes.io/component: kafka
 automountServiceAccountToken: false
 ---
-# Source: yotpo-assignment/templates/rbac/rbac.yaml
+# Source: helm_chart/templates/rbac/rbac.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: yariv-sa
 ---
-# Source: yotpo-assignment/charts/kafka/templates/secrets.yaml
+# Source: helm_chart/charts/kafka/templates/secrets.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -126,7 +126,7 @@ data:
   inter-broker-password: "TU03eE9NSFdNRQ=="
   controller-password: "RGk5elJxNHpnVA=="
 ---
-# Source: yotpo-assignment/charts/kafka/templates/secrets.yaml
+# Source: helm_chart/charts/kafka/templates/secrets.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -142,7 +142,7 @@ type: Opaque
 data:
   kraft-cluster-id: "TzM0VWhHUmduRjlWVTlVRzJRaHFDdQ=="
 ---
-# Source: yotpo-assignment/charts/kafka/templates/broker/configmap.yaml
+# Source: helm_chart/charts/kafka/templates/broker/configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -190,7 +190,7 @@ data:
 
     # Custom Kafka Configuration
 ---
-# Source: yotpo-assignment/charts/kafka/templates/controller-eligible/configmap.yaml
+# Source: helm_chart/charts/kafka/templates/controller-eligible/configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -238,7 +238,7 @@ data:
 
     # Custom Kafka Configuration
 ---
-# Source: yotpo-assignment/charts/kafka/templates/scripts-configmap.yaml
+# Source: helm_chart/charts/kafka/templates/scripts-configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -396,7 +396,7 @@ data:
       append_file_to_kafka_conf /secret-config/server-secret.properties $KAFKA_CONFIG_FILE
     fi
 ---
-# Source: yotpo-assignment/templates/rbac/rbac.yaml
+# Source: helm_chart/templates/rbac/rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -406,7 +406,7 @@ rules:
   resources: ["services"]
   verbs: ["get", "watch", "list"]
 ---
-# Source: yotpo-assignment/templates/rbac/rbac.yaml
+# Source: helm_chart/templates/rbac/rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 # This role binding allows "jane" to read pods in the "default" namespace.
 # You need to already have a Role named "svc-reader" in that namespace.
@@ -421,7 +421,7 @@ roleRef:
   kind: Role
   name: svc-reader
 ---
-# Source: yotpo-assignment/charts/kafka/templates/broker/svc-headless.yaml
+# Source: helm_chart/charts/kafka/templates/broker/svc-headless.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -454,7 +454,7 @@ spec:
     app.kubernetes.io/component: broker
     app.kubernetes.io/part-of: kafka
 ---
-# Source: yotpo-assignment/charts/kafka/templates/controller-eligible/svc-headless.yaml
+# Source: helm_chart/charts/kafka/templates/controller-eligible/svc-headless.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -491,7 +491,7 @@ spec:
     app.kubernetes.io/component: controller-eligible
     app.kubernetes.io/part-of: kafka
 ---
-# Source: yotpo-assignment/charts/kafka/templates/svc.yaml
+# Source: helm_chart/charts/kafka/templates/svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -518,14 +518,14 @@ spec:
     app.kubernetes.io/name: kafka
     app.kubernetes.io/part-of: kafka
 ---
-# Source: yotpo-assignment/templates/consumer-deployment.yaml
+# Source: helm_chart/templates/consumer-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: yariv-yotpo-assignment-consumer
+  name: yariv-helm_chart-consumer
   labels:
-    helm.sh/chart: yotpo-assignment-0.1.0
-    app.kubernetes.io/name: yotpo-assignment
+    helm.sh/chart: helm_chart-0.1.0
+    app.kubernetes.io/name: helm_chart
     app.kubernetes.io/instance: yariv
     app.kubernetes.io/version: "1.16.0"
     app.kubernetes.io/managed-by: Helm
@@ -533,17 +533,17 @@ spec:
   replicas: 
   selector:
     matchLabels:
-      app.kubernetes.io/name: yotpo-assignment
+      app.kubernetes.io/name: helm_chart
       app.kubernetes.io/instance: yariv
       app: consumer
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: yotpo-assignment
+        app.kubernetes.io/name: helm_chart
         app.kubernetes.io/instance: yariv
         app: consumer
-        helm.sh/chart: yotpo-assignment-0.1.0
-        app.kubernetes.io/name: yotpo-assignment
+        helm.sh/chart: helm_chart-0.1.0
+        app.kubernetes.io/name: helm_chart
         app.kubernetes.io/instance: yariv
         app.kubernetes.io/version: "1.16.0"
         app.kubernetes.io/managed-by: Helm
@@ -570,14 +570,14 @@ spec:
           resources:
             {}
 ---
-# Source: yotpo-assignment/templates/producer-deployment.yaml
+# Source: helm_chart/templates/producer-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: yariv-yotpo-assignment-producer
+  name: yariv-helm_chart-producer
   labels:
-    helm.sh/chart: yotpo-assignment-0.1.0
-    app.kubernetes.io/name: yotpo-assignment
+    helm.sh/chart: helm_chart-0.1.0
+    app.kubernetes.io/name: helm_chart
     app.kubernetes.io/instance: yariv
     app.kubernetes.io/version: "1.16.0"
     app.kubernetes.io/managed-by: Helm
@@ -585,17 +585,17 @@ spec:
   replicas: 
   selector:
     matchLabels:
-      app.kubernetes.io/name: yotpo-assignment
+      app.kubernetes.io/name: helm_chart
       app.kubernetes.io/instance: yariv
       app: producer
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: yotpo-assignment
+        app.kubernetes.io/name: helm_chart
         app.kubernetes.io/instance: yariv
         app: producer
-        helm.sh/chart: yotpo-assignment-0.1.0
-        app.kubernetes.io/name: yotpo-assignment
+        helm.sh/chart: helm_chart-0.1.0
+        app.kubernetes.io/name: helm_chart
         app.kubernetes.io/instance: yariv
         app.kubernetes.io/version: "1.16.0"
         app.kubernetes.io/managed-by: Helm
@@ -611,7 +611,7 @@ spec:
             - "svc"
             - yariv-kafka
       containers:
-        - name: yotpo-assignment
+        - name: helm_chart
           securityContext:
             {}
           image: "yarivy/kafka-producer:latest"
@@ -622,7 +622,7 @@ spec:
           resources:
             {}
 ---
-# Source: yotpo-assignment/charts/kafka/templates/broker/statefulset.yaml
+# Source: helm_chart/charts/kafka/templates/broker/statefulset.yaml
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -862,7 +862,7 @@ spec:
           requests:
             storage: "8Gi"
 ---
-# Source: yotpo-assignment/charts/kafka/templates/controller-eligible/statefulset.yaml
+# Source: helm_chart/charts/kafka/templates/controller-eligible/statefulset.yaml
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -1104,7 +1104,7 @@ spec:
           requests:
             storage: "8Gi"
 ---
-# Source: yotpo-assignment/charts/kafka/templates/provisioning/job.yaml
+# Source: helm_chart/charts/kafka/templates/provisioning/job.yaml
 kind: Job
 apiVersion: batch/v1
 metadata:
